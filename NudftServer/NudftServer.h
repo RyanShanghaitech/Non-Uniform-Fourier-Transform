@@ -64,10 +64,11 @@ public:
     ~NudftServer();
 private:
 #define FILE_CFG ("./config.ini")
+#define ADDR_SERVER_DEFAULT ("127.0.0.1")
+#define PORT_SERVER_DEFAULT (7885)
     typedef struct{
-        char addr[16] = {'\0'};
-        int port = 0;
-        int nThd = 0;
+        char addr[16];
+        int port;
     }typeConfig;
     char addrServer[16] = {'\0'};
     uint16_t portServer;
@@ -76,7 +77,7 @@ private:
     std::unique_ptr<std::list<uint8_t>> listRxPkt;
     std::unique_ptr<std::list<uint8_t>> listTxPkt;
 
-    int funGetAddrPortCmd(NudftServer::typeConfig* cfg);
+    int funGetAddrPortDefault(NudftServer::typeConfig* cfg);
     int funGetAddrPortFile(NudftServer::typeConfig* cfg);
     int funSaveAddrPort(NudftServer::typeConfig* config);
     int funGetAddrPort(NudftServer::typeConfig* cfg);

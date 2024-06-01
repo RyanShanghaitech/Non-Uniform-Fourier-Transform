@@ -1,4 +1,11 @@
 # READ ME
+## How to use
+1. Install `Qt` library (recommanded version: 5.15.9)
+1. Create a folder named `build` in folder `NudftServer`
+1. Run `cmake ../` in folder `build`
+1. Run `make` in folder `build`
+1. Start server by executing `./NudftServer`
+1. Go to folder `NudftClient` and run Python scipt `testNudftClient.py`
 ## Abstract
 This source code consists of 2 parts
 - A C++ program running a TCP server, receiving data and performing NUDFT (Non-Uniform Discrete Fourier Transform) or NUIDFT (Non-Uniform Inverse Discrete Fourier Transform), then sending back the result.
@@ -7,7 +14,7 @@ This source code consists of 2 parts
 ## Motivation
 NUFFT (Non-Uniform Fast Fourier Transform) needs interpolation and may introduce errors. And there are few NUFFT library support all platforms and all languages. By implementing a NUDFT server, we may remove the interpolation error and perform NUDFT on any programming language and any platform.
 
-## Notes
+## Function
 The NUDFT performs the following formula:
 
 $$
@@ -22,7 +29,24 @@ $$
 
 Range of $k$ and $x$ is supposed to be $[-0.5, 0.5)^{N}$ and $(-inf, inf)^{N}$. Both $k$ and $x$ need not be integers.
 
+## TCP parameter
+
+Default server address and port are `127.0.0.1` and `7885`. However you can modify these parameter by
+
+1. Create a file `config.ini` in the same foler of server executable, the content should be look like this
+
+```
+[ADDR] 127.0.0.1
+[PORT] 7885
+```
+
+2. Modify the definition of address and port in the beginning of Python script.
+
+## TCP Packet
+
 The definition of a packet is shown below:
+
+### Definition of a packet
 ```
 /*
 * packet definition: {0xFA, <data block>, 0xFC}
@@ -30,7 +54,14 @@ The definition of a packet is shown below:
 * 0xFA: Packet header
 * 0xFB: escape char, 0xFB + 0xF<D~F> denotes for 0x7<A~C>
 * 0xFC: Packet footer
-*
+*/
+```
+
+where `<data block>` could be **Tx data block** (in context of server) or **Rx data block** (also in context of server).
+
+### Definition of Rx data block
+```
+/*
 * Rx data block definition:
 * {<typeTransform>, <numInputCoor>, <numOutputCoor>, <listInputCoor>, <listInputData>, <listOutputCoor>, <sumBytes>}
 * para@<typeTransform>: a byte specifying the type of transform, see below
@@ -59,15 +90,13 @@ The definition of a packet is shown below:
 * type@<listInputData>: {{float64, float64} ...}
 * type@<listOutputCoor>: {{float64, [float64, float64]} ...}
 * type@<sumBytes>: uint8
-*
+*/
+```
+### Definition of Tx data block
+```
+/*
 * Tx data block definition:
 * {<listOutputData>, <sumBytes>}
 * para@<listOutputData>: list of data of input points, dim0: points dim1: real/imag (size of dim1 must be 2)
 * type@<listOutputData>: {{float64, float64} ...}
-*
-* range of k and xyz
-* k: [-0.5, 0.5]
-* xyz: [-inf, inf]
-*
 */
-```

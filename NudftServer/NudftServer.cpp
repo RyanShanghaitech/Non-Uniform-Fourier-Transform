@@ -7,7 +7,6 @@ NudftServer::NudftServer(QObject *parent): QTcpServer(parent), listRxPkt(new std
         funGetAddrPort(&config);
         strcpy(addrServer, config.addr);
         portServer = config.port;
-        numThread = config.nThd;
 
         if(this->listen(QHostAddress(addrServer), portServer)){
             connect(this, &QTcpServer::newConnection, this, &NudftServer::slotNewConnection);
@@ -24,15 +23,10 @@ NudftServer::~NudftServer()
 {
 }
 
-int NudftServer::funGetAddrPortCmd(NudftServer::typeConfig* config)
+int NudftServer::funGetAddrPortDefault(NudftServer::typeConfig* config)
 {
-    // read config from user
-    printf("[ENTR] ADDR: ");
-    assert(scanf("%15s", (char*)&config->addr));
-    printf("[ENTR] PORT: ");
-    assert(scanf("%d", &config->port));
-    printf("[ENTR] NTHD: ");
-    assert(scanf("%d", &config->nThd));
+    strcpy(config->addr, ADDR_SERVER_DEFAULT);
+    config->port = PORT_SERVER_DEFAULT;
 
     return 0;
 }
@@ -45,25 +39,21 @@ int NudftServer::funGetAddrPortFile(NudftServer::typeConfig* config)
     if(fileConfig == nullptr){
         return 1;
     }else{
-        fseek(fileConfig, 0, SEEK_END);
-        if(ftell(fileConfig)  < 21){ // 21 is the minimum possible size of config.ini
-            fclose(fileConfig);
-            return 1;
-        }else{
-            fseek(fileConfig, 0, SEEK_SET);
-        }
+        fseek(fileConfig, 0, SEEK_SET);
     }
 
     // read config from file
-    fscanf(fileConfig, "[ADDR] %15s\n", (char*)&config->addr);
-    fscanf(fileConfig, "[PORT] %d\n", &config->port);
-    fscanf(fileConfig, "[NTHD] %d\n", &config->nThd);
+    int numByteAddr = fscanf(fileConfig, "[ADDR] %15s\n", (char*)&config->addr);
+    int numBytePort = fscanf(fileConfig, "[PORT] %d\n", &config->port);
     fclose(fileConfig);
+
+    if(numByteAddr == 0 || numBytePort == 0){
+        return 1;
+    }
     
     // print config
     printf("[INFO] ADDR: %s\n", (char*)config->addr);
     printf("[INFO] PORT: %d\n", config->port);
-    printf("[INFO] NTHD: %d\n", config->nThd);
 
     return 0;
 }
@@ -78,7 +68,6 @@ int NudftServer::funSaveAddrPort(NudftServer::typeConfig* config)
     }else{
         fprintf(fileConfig, "[ADDR] %s\n", (char*)config->addr);
         fprintf(fileConfig, "[PORT] %d\n", config->port);
-        fprintf(fileConfig, "[NTHD] %d\n", config->nThd);
         fclose(fileConfig);
         return 0;
     }
@@ -88,8 +77,7 @@ int NudftServer::funGetAddrPort(NudftServer::typeConfig* config)
 {
     int rtFun = 0;
     if(funGetAddrPortFile(config)){
-        funGetAddrPortCmd(config);
-        funSaveAddrPort(config);
+        funGetAddrPortDefault(config);
     }
     return 0;
 }
@@ -243,6 +231,9 @@ int NudftServer::funParsePkt(const std::list<uint8_t> *listRxPkt, std::list<uint
     }
     
     // run calculation
+    int64_t numThread = std::thread::hardware_concurrency() - 1;
+    numThread = (numThread == 0)?(1):(numThread);
+    printf("[INFO] numThread = %d\n", (int)numThread);
     std::unique_ptr<double[]> arrOutputData(new double[numOutputCoor*2]);
     int64_t ptsPerThread = numOutputCoor/numThread;
     if(numOutputCoor > ptsPerThread*numThread) ptsPerThread += 1;

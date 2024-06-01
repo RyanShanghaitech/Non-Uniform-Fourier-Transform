@@ -5,6 +5,8 @@ import skimage.transform as transform
 from packNudftClient.modNudftClient import classNudftClient
 
 imgH, imgW = 128, 128
+addrServer = "127.0.0.1"
+portServer = 7885
 
 def imfft(img): return fft.fftshift(fft.fft2(fft.ifftshift(img)))
 def imifft(ksapce): return fft.fftshift(fft.ifft2(fft.ifftshift(ksapce)))
@@ -27,11 +29,14 @@ list_Y = linspace(-imgH//2, imgH//2, imgH, endpoint=False)
 list_Y = repeat(list_Y, imgW).flatten()
 list_OutputCoor = array([list_X, list_Y], dtype=float64).T.copy()
 
-objClient = classNudftClient("127.0.0.1", 7885)
+objClient = classNudftClient(addrServer, portServer)
 list_OutputData = objClient.funNuidft(list_InputCoor, list_InputData, list_OutputCoor)
 
 imgReco = list_OutputData.reshape((imgH, imgW))
 
 figure()
-imshow(abs(imgReco), cmap='gray')
+subplot(1, 2, 1)
+imshow(abs(img), cmap='gray'); title('Original')
+subplot(1, 2, 2)
+imshow(abs(imgReco), cmap='gray'); title('NUIDFT')
 show()
