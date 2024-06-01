@@ -7,3 +7,5 @@ build/
 # Python cache
 __pycache__/
 
+# vscode cache
+.vscode/
