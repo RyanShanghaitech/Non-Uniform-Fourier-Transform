@@ -9,13 +9,17 @@ NUFFT (Non-Uniform Fast Fourier Transform) needs interpolation and may introduce
 
 ## Notes
 The NUDFT performs the following formula:
+
 $$
 S(\vec{k}) = \sum_{\vec{x}}{I(\vec{x})e^{-2 \pi \vec{k} \vec{x}}}
 $$
+
 The NUIDFT performs the following formula:
+
 $$
 I(\vec{x}) = \sum_{\vec{k}}{I(\vec{x})e^{2 \pi \vec{k} \vec{x}}}
 $$
+
 Range of $k$ and $x$ is supposed to be $[-0.5, 0.5)^{N}$ and $(-inf, inf)^{N}$. Both $k$ and $x$ need not be integers.
 
 The definition of a packet is shown below:
