@@ -9,7 +9,7 @@ class classNudftClient:
         except:
             raise ConnectionError("in classNudftClient")
 
-    def funPackData(self, flagIdft:bool, listCoorIn:ndarray, listDataIn:ndarray, listCoorOut:ndarray) -> ndarray:
+    def _funPackData(self, flagIdft:bool, listCoorIn:ndarray, listDataIn:ndarray, listCoorOut:ndarray) -> ndarray:
         assert(listCoorIn.ndim == 2 and listDataIn.ndim == 1 and listCoorOut.ndim == 2)
         assert(listCoorIn.shape[0] == listDataIn.shape[0]) # num of point consistency
         assert(listCoorIn.shape[1] == listCoorOut.shape[1]) # dim consistency
@@ -49,7 +49,7 @@ class classNudftClient:
         # return
         return listPkgTx
     
-    def funUnpackData(self, bytesPkgRx:bytes) -> ndarray:
+    def _funUnpackData(self, bytesPkgRx:bytes) -> ndarray:
         # check header, footer
         assert(bytesPkgRx[0] == 0xFA)
         assert(bytesPkgRx[-1] == 0xFC)
@@ -74,7 +74,7 @@ class classNudftClient:
         # return
         return listDataOut
 
-    def funAcqPkg(self) -> bytes:
+    def _funAcqPkg(self) -> bytes:
         # self.objSocket.setblocking(False)
         flagHeader = False
         bytesPkgRx = bytes()
@@ -98,20 +98,20 @@ class classNudftClient:
     def funNudft(self, listX:ndarray, listIx:ndarray, listK:ndarray) -> ndarray:
         assert(listX.shape[0] == listIx.shape[0]) # num of point consistency
         assert(listX.shape[1] == listK.shape[1]) # dim consistency
-        listPkgTx = self.funPackData(False, listX, listIx, listK)
+        listPkgTx = self._funPackData(False, listX, listIx, listK)
         self.objSocket.send(listPkgTx)
-        listPkgRx = self.funAcqPkg()
-        listSk = self.funUnpackData(listPkgRx)
+        listPkgRx = self._funAcqPkg()
+        listSk = self._funUnpackData(listPkgRx)
         listSk = listSk[0::2] + 1j*listSk[1::2]
         return listSk
     
     def funNuidft(self, listK:ndarray, listSk:ndarray, listX:ndarray) -> ndarray:
         assert(listK.shape[0] == listSk.shape[0]) # num of point consistency
         assert(listK.shape[1] == listX.shape[1]) # dim consistency
-        listPkgTx = self.funPackData(True, listK, listSk, listX)
+        listPkgTx = self._funPackData(True, listK, listSk, listX)
         self.objSocket.send(listPkgTx)
-        bytesPkgRx = self.funAcqPkg()
-        listIx = self.funUnpackData(bytesPkgRx)
+        bytesPkgRx = self._funAcqPkg()
+        listIx = self._funUnpackData(bytesPkgRx)
         listIx = listIx[0::2] + 1j*listIx[1::2]
         return listIx
 

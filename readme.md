@@ -6,10 +6,12 @@
 1. Run `make` in folder `build`
 1. Start server by executing `./NudftServer`
 1. Go to folder `NudftClient` and run Python scipt `testNudftClient.py`
+1. Modify the Python code for your own use.
+
 ## Abstract
 This source code consists of 2 parts
 - A C++ program running a TCP server, receiving data and performing NUDFT (Non-Uniform Discrete Fourier Transform) or NUIDFT (Non-Uniform Inverse Discrete Fourier Transform), then sending back the result.
-- A Python script running as a TCP client, performing NUDFT by communicate with the server. A Python package for communicating is provided.
+- A Python script running as a TCP client, performing NUDFT by communicating with the server. A Python package for communicating is available.
 
 ## Motivation
 NUFFT (Non-Uniform Fast Fourier Transform) needs interpolation and may introduce errors. And there are few NUFFT library support all platforms and all languages. By implementing a NUDFT server, we may remove the interpolation error and perform NUDFT on any programming language and any platform.
