@@ -23,4 +23,4 @@ add_executable(NudftServer
     NudftServer.h
 )
 
-target_link_libraries(NudftServer Qt5::Core Qt5::Network)
+target_link_libraries(NudftServer Qt5::Core Qt5::Network pthread)
