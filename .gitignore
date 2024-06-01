@@ -1,3 +1,9 @@
 # C binary file
-NudftServer/build/
+build/
+
+# achieve file
+*.zip
+
+# Python cache
+__pycache__/
 
