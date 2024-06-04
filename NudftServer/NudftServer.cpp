@@ -1,6 +1,6 @@
 #include "NudftServer.h"
 
-NudftServer::NudftServer(QObject *parent): QTcpServer(parent), listRxPkt(new std::list<uint8_t>), listTxPkt(new std::list<uint8_t>)
+NudftServer::NudftServer(QObject *parent): QTcpServer(parent)
 {
     typeConfig config;
     while(true){
@@ -96,8 +96,8 @@ void NudftServer::slotSocketDisconnected()
 {
     printf("[INFO] disconnected\n");
     socket->close();
-    listRxPkt->clear();
-    listTxPkt->clear();
+    listRxPkt.clear();
+    listTxPkt.clear();
 }
 
 void NudftServer::slotDataReceived()
@@ -117,16 +117,16 @@ void NudftServer::slotDataReceived()
         {
         case 0xFA:
             flagHeader = 1;
-            listRxPkt->clear();
-            listTxPkt->clear();
+            listRxPkt.clear();
+            listTxPkt.clear();
             break;
         case 0xFB:
             flagEscape = 1;
             break;
         case 0xFC:
             flagHeader = 0;
-            if(!funParsePkt(listRxPkt.get(), listTxPkt.get())){
-                funPackData(listTxPkt.get(), &qByteArraySocketTxData);
+            if(!funParsePkt(&listRxPkt, &listTxPkt)){
+                funPackData(&listTxPkt, &qByteArraySocketTxData);
                 socket->write(qByteArraySocketTxData);
                 socket->flush();
             }else{
@@ -134,8 +134,8 @@ void NudftServer::slotDataReceived()
             }
             break;
         default:
-            if(listRxPkt->size() < MEMORY_LIMIT){
-                listRxPkt->push_back(flagEscape?byte-0x03:byte);
+            if(listRxPkt.size() < MEMORY_LIMIT){
+                listRxPkt.push_back(flagEscape?byte-0x03:byte);
             }else{
                 printf("[ERRO] memory limit exceeded\n");
             }
@@ -150,8 +150,8 @@ int NudftServer::funParsePkt(const std::list<uint8_t> *listRxPkt, std::list<uint
     int64_t lenPkt = listRxPkt->size();
     std::unique_ptr<uint8_t[]> arrPkt(new uint8_t[lenPkt]);
     uint8_t typeTransform;
-    int64_t numInputCoor;
-    int64_t numOutputCoor;
+    int64_t numInput;
+    int64_t numOutput;
     double *arrInputCoor;
     double *arrInputData;
     double *arrOutputCoor;
@@ -191,17 +191,17 @@ int NudftServer::funParsePkt(const std::list<uint8_t> *listRxPkt, std::list<uint
     }
 
     ptrBias += sizeof(uint8_t);
-    numInputCoor = *(uint64_t*)&arrPkt[ptrBias];
+    numInput = *(uint64_t*)&arrPkt[ptrBias];
 
     ptrBias += sizeof(uint64_t);
-    numOutputCoor = *(uint64_t*)&arrPkt[ptrBias];
+    numOutput = *(uint64_t*)&arrPkt[ptrBias];
 
     lenDesired = 
         2*sizeof(uint8_t) + // typeTransform, sumBytes
-        2*sizeof(uint64_t) + // numInputCoor, numOutputCoor
-        (numInputCoor)*(numDim)*(sizeof(double)) + // listInputCoor
-        (numInputCoor)*(2*sizeof(double)) + // listInputData
-        (numOutputCoor)*(numDim)*(sizeof(double)); // listOutputCoor
+        2*sizeof(uint64_t) + // numInput, numOutput
+        (numInput)*(numDim)*(sizeof(double)) + // listInputCoor
+        (numInput)*(2*sizeof(double)) + // listInputData
+        (numOutput)*(numDim)*(sizeof(double)); // listOutputCoor
     
     if((size_t)lenPkt != lenDesired){ // listInputData
         printf("[ERRO] data size error\n");
@@ -210,14 +210,17 @@ int NudftServer::funParsePkt(const std::list<uint8_t> *listRxPkt, std::list<uint
 
     ptrBias += sizeof(uint64_t);
     arrInputCoor = (double*)&arrPkt[ptrBias];
+    double* ptrInputCoor = arrInputCoor;
 
-    ptrBias += numInputCoor*numDim*sizeof(double);
+    ptrBias += numInput*numDim*sizeof(double);
     arrInputData = (double*)&arrPkt[ptrBias];
+    double* ptrInputData = arrInputData;
 
-    ptrBias += numInputCoor*2*sizeof(double);
+    ptrBias += numInput*2*sizeof(double);
     arrOutputCoor = (double*)&arrPkt[ptrBias];
+    double* ptrOutputCoor = arrOutputCoor;
 
-    ptrBias += numOutputCoor*numDim*sizeof(double);
+    ptrBias += numOutput*numDim*sizeof(double);
     sumBytes = *(uint8_t*)&arrPkt[ptrBias];
 
     uint8_t derivedSum = 0;
@@ -230,40 +233,62 @@ int NudftServer::funParsePkt(const std::list<uint8_t> *listRxPkt, std::list<uint
         return 1;
     }
     
-    // run calculation
+    // derive point number per thread
     int64_t numThread = std::thread::hardware_concurrency() - 1;
     numThread = (numThread == 0)?(1):(numThread);
-    printf("[INFO] numThread = %d\n", (int)numThread);
-    std::unique_ptr<double[]> arrOutputData(new double[numOutputCoor*2]);
-    int64_t ptsPerThread = numOutputCoor/numThread;
-    if(numOutputCoor > ptsPerThread*numThread) ptsPerThread += 1;
-    std::thread arrThread[numThread];
+    std::unique_ptr<int64_t[]> arrPtsPerThread(new int64_t[numThread]);
+    int64_t* ptrPtsPerThread = arrPtsPerThread.get();
     for(int64_t idxThread = 0; idxThread < numThread; ++idxThread){
-        arrThread[idxThread] = std::thread(
-                    NudftServer::funNUDFT,
-                    flagIDFT,
-                    numDim,
-                    numInputCoor,
-                    arrInputCoor,
-                    arrInputData,
-                    (idxThread != numThread - 1)?(ptsPerThread):(numOutputCoor - ptsPerThread*(numThread - 1)),
-                    arrOutputCoor + numDim*idxThread*ptsPerThread,
-                    arrOutputData.get() + 2*idxThread*ptsPerThread,
-                    idxThread
-                    );
+        if(idxThread < numOutput%numThread){
+            *ptrPtsPerThread = numOutput/numThread + 1;
+        }else{
+            *ptrPtsPerThread = numOutput/numThread;
+        }
+        ++ptrPtsPerThread;
     }
+
+    // reserve memory for output data
+    std::unique_ptr<double[]> arrOutputData(new double[numOutput*2]);
+    double* ptrOutputData = arrOutputData.get();
+    std::list<std::thread> listThread;
+    std::list<std::thread>::iterator itThread = listThread.begin();
+
+    // start threads
+    ptrPtsPerThread = arrPtsPerThread.get();
+    ptrOutputCoor = arrOutputCoor;
+    ptrOutputData = arrOutputData.get();;
     for(int64_t idxThread = 0; idxThread < numThread; ++idxThread){
-        arrThread[idxThread].join();
+        listThread.push_back(std::thread(
+            NudftServer::funNUDFT,
+            flagIDFT,
+            numDim,
+            numInput,
+            arrInputCoor,
+            arrInputData,
+            *ptrPtsPerThread,
+            ptrOutputCoor,
+            ptrOutputData,
+            idxThread
+            ));
+        ptrOutputCoor += numDim*(*ptrPtsPerThread);
+        ptrOutputData += 2*(*ptrPtsPerThread);
+        ++ptrPtsPerThread;
+    }
+    
+    // wait for threads complete
+    itThread = listThread.begin();
+    for(int64_t idxThread = 0; idxThread < numThread; ++idxThread){
+        itThread->join();
+        ++itThread;
     }
 
     // generate Tx packet
-    std::list<uint8_t> listTemp;
-    uint8_t* arru8Outputdata = (uint8_t*)arrOutputData.get();
+    uint8_t* ptrOutputdataU8 = (uint8_t*)arrOutputData.get();
     uint8_t sumOutput = 0x00;
-    for(int64_t idxOutputData = 0; idxOutputData < numOutputCoor*2*sizeof(double); ++idxOutputData){ // 2*numOutputCoor: real and imag
-        sumOutput += arru8Outputdata[idxOutputData];
-        listTemp = {(uint8_t*)&arrOutputData[idxOutputData], (uint8_t*)&arrOutputData[idxOutputData+1]};
-        listTxPkt->push_back(arru8Outputdata[idxOutputData]);
+    for(int64_t idxOutputData = 0; idxOutputData < numOutput*2*sizeof(double); ++idxOutputData){ // 2*numOutput: real and imag
+        sumOutput += *ptrOutputdataU8;
+        listTxPkt->push_back(*ptrOutputdataU8);
+        ++ptrOutputdataU8;
     }
     listTxPkt->push_back(sumOutput);
 
@@ -326,7 +351,6 @@ int NudftServer::funNUDFT(
         if(idxThread == 0 && idxDm1%100 == 0){
             printf("[INFO] thread[%d]: progress = %.2f%%\n", (int)idxThread, 100*(double)idxDm1/lenDm1);
         }
-
     }
 
     return 0;

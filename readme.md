@@ -1,11 +1,11 @@
 # READ ME
 ## How to use
-1. Install `Qt` library (recommanded version: 5.15.9)
+1. Install `Qt` library (recommended version: 5.15.9)
 1. Create a folder named `build` in folder `NudftServer`
 1. Run `cmake ../` in folder `build`
 1. Run `make` in folder `build`
 1. Start server by executing `./NudftServer`
-1. Go to folder `NudftClient` and run Python scipt `testNudftClient.py`
+1. Start client by and run Python scipt `testNudftClient.py` in folder `./NudftClient`
 1. Modify the Python code for your own use.
 
 ## Abstract
@@ -26,23 +26,14 @@ $$
 The NUIDFT performs the following formula:
 
 $$
-I(\vec{x}) = \sum_{\vec{k}}{I(\vec{x})e^{2 \pi \vec{k} \vec{x}}}
+I(\vec{x}) = \sum_{\vec{k}}{S(\vec{k})e^{2 \pi \vec{k} \vec{x}}}
 $$
 
 Range of $k$ and $x$ is supposed to be $[-0.5, 0.5)^{N}$ and $(-inf, inf)^{N}$. Both $k$ and $x$ need not be integers.
 
 ## TCP parameter
 
-Default server address and port are `127.0.0.1` and `7885`. However you can modify these parameter by
-
-1. Create a file `config.ini` in the same foler of server executable, the content should be look like this
-
-```
-[ADDR] 127.0.0.1
-[PORT] 7885
-```
-
-2. Modify the definition of address and port in the beginning of Python script.
+Default server address and port are `127.0.0.1` and `7885`. However you can modify these parameter by modifying `config.ini` in `./config` folder.
 
 ## TCP Packet
 
@@ -75,9 +66,9 @@ where `<data block>` could be **Tx data block** (in context of server) or **Rx d
 * // 0x05: NUIDFT_3D,
 * para@<numInputCoor>: specifying the number of input points
 * para@<numOutputCoor>: specifying the number of output points
-* para@<listInputCoor>: list of coordinates of input points, dim0: points dim1: x/y/z (size of dim1 could be 1, 2, 3 depending on the type of transform)
-* para@<listInputData>: list of data of input points, dim0: points dim1: real/imag (size of dim1 must be 2)
-* para@<listOutputCoor>: list of coordinates of output points, dim0: points dim1: x/y/z (size of dim1 could be 1, 2, 3 depending on the type of transform)
+* para@<listInputCoor>: list of coordinates of input points, {{x0[, y0, z0]}, {x1[, y1, z1]}, ...}
+* para@<listInputData>: list of data of input points, {{pt0.real, pt0.imag}, {pt1.real, pt1.imag}, ...}
+* para@<listOutputCoor>: list of coordinates of output points, {{x0[, y0, z0]}, {x1[, y1, z1]}, ...}
 * para@<sumBytes>: sum of all bytes for verification
 * type@<typeTransform>: uint8
 * // 0x00: NUDFT_1D
@@ -100,5 +91,7 @@ where `<data block>` could be **Tx data block** (in context of server) or **Rx d
 * Tx data block definition:
 * {<listOutputData>, <sumBytes>}
 * para@<listOutputData>: list of data of input points, dim0: points dim1: real/imag (size of dim1 must be 2)
+* para@<sumBytes>: sum of all bytes for verification
 * type@<listOutputData>: {{float64, float64} ...}
+* type@<sumBytes>: uint8
 */

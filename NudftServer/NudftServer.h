@@ -63,7 +63,7 @@ public:
     NudftServer(QObject *parent = nullptr);
     ~NudftServer();
 private:
-#define FILE_CFG ("./config.ini")
+#define FILE_CFG ("../config/config.ini")
 #define ADDR_SERVER_DEFAULT ("127.0.0.1")
 #define PORT_SERVER_DEFAULT (7885)
     typedef struct{
@@ -73,9 +73,9 @@ private:
     char addrServer[16] = {'\0'};
     uint16_t portServer;
     int64_t numThread;
-    QTcpSocket *socket = nullptr;
-    std::unique_ptr<std::list<uint8_t>> listRxPkt;
-    std::unique_ptr<std::list<uint8_t>> listTxPkt;
+    QTcpSocket* socket = nullptr;
+    std::list<uint8_t> listRxPkt;
+    std::list<uint8_t> listTxPkt;
 
     int funGetAddrPortDefault(NudftServer::typeConfig* cfg);
     int funGetAddrPortFile(NudftServer::typeConfig* cfg);

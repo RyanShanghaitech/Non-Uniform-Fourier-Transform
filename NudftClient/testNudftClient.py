@@ -2,14 +2,18 @@ from numpy import *
 from matplotlib.pyplot import *
 import skimage.data as data
 import skimage.transform as transform
+from os import path
 from packNudftClient.modNudftClient import classNudftClient
 
 imgH, imgW = 128, 128
-addrServer = "127.0.0.1"
-portServer = 7885
 
 def imfft(img): return fft.fftshift(fft.fft2(fft.ifftshift(img)))
 def imifft(ksapce): return fft.fftshift(fft.ifft2(fft.ifftshift(ksapce)))
+
+dirRoot = path.dirname(path.abspath(__file__))
+fileCfg = open(path.join(dirRoot, "../config/config.ini"), "r")
+addrServer = fileCfg.readline()[7:-1]
+portServer = int(fileCfg.readline()[7:])
 
 img = data.shepp_logan_phantom()
 img = transform.resize(img, (imgH, imgW))
