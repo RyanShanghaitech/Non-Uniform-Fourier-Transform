@@ -2,7 +2,7 @@ from numpy import *
 from socket import *
 
 class classNudftClient:
-    def __init__(self, ipServer:str, portServer:int) -> None:
+    def __init__(self, ipServer:str="127.0.0.1", portServer:int=7885) -> None:
         self.objSocket = socket(AF_INET, SOCK_STREAM)
         try:
             self.objSocket.connect((ipServer, portServer))

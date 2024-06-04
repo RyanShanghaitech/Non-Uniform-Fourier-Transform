@@ -2,41 +2,35 @@ from numpy import *
 from matplotlib.pyplot import *
 import skimage.data as data
 import skimage.transform as transform
-from os import path
 from packNudftClient.modNudftClient import classNudftClient
 
-imgH, imgW = 128, 128
+sizeImg = 128
 
 def imfft(img): return fft.fftshift(fft.fft2(fft.ifftshift(img)))
 def imifft(ksapce): return fft.fftshift(fft.ifft2(fft.ifftshift(ksapce)))
 
-dirRoot = path.dirname(path.abspath(__file__))
-fileCfg = open(path.join(dirRoot, "../config/config.ini"), "r")
-addrServer = fileCfg.readline()[7:-1]
-portServer = int(fileCfg.readline()[7:])
-
 img = data.shepp_logan_phantom()
-img = transform.resize(img, (imgH, imgW))
+img = transform.resize(img, (sizeImg, sizeImg))
 kspace = imfft(img)
 
-list_Kx = linspace(-0.5, 0.5, imgW, endpoint=False)
-list_Kx = tile(list_Kx, imgH).flatten()
-list_Ky = linspace(-0.5, 0.5, imgH, endpoint=False)
-list_Ky = repeat(list_Ky, imgW).flatten()
-list_InputCoor = array([list_Kx, list_Ky], dtype=float64).T.copy()
+listKx = linspace(-0.5, 0.5, sizeImg, endpoint=False)
+listKx = tile(listKx, sizeImg).flatten()
+listKy = linspace(-0.5, 0.5, sizeImg, endpoint=False)
+listKy = repeat(listKy, sizeImg).flatten()
+listInputCoor = array([listKx, listKy], dtype=float64).T.copy()
 
-list_InputData = kspace.flatten().copy()
+listInputData = kspace.flatten().copy()
 
-list_X = linspace(-imgW//2, imgW//2, imgW, endpoint=False)
-list_X = tile(list_X, imgH).flatten()
-list_Y = linspace(-imgH//2, imgH//2, imgH, endpoint=False)
-list_Y = repeat(list_Y, imgW).flatten()
-list_OutputCoor = array([list_X, list_Y], dtype=float64).T.copy()
+listX = linspace(-sizeImg//2, sizeImg//2, sizeImg, endpoint=False)
+listX = tile(listX, sizeImg).flatten()
+listY = linspace(-sizeImg//2, sizeImg//2, sizeImg, endpoint=False)
+listY = repeat(listY, sizeImg).flatten()
+listOutputCoor = array([listX, listY], dtype=float64).T.copy()
 
-objClient = classNudftClient(addrServer, portServer)
-list_OutputData = objClient.funNuidft(list_InputCoor, list_InputData, list_OutputCoor)
+objClient = classNudftClient()
+listOutputData = objClient.funNuidft(listInputCoor, listInputData, listOutputCoor)
 
-imgReco = list_OutputData.reshape((imgH, imgW))
+imgReco = listOutputData.reshape((sizeImg, sizeImg))
 
 figure()
 subplot(1, 2, 1)
