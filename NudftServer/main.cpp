@@ -6,7 +6,10 @@ int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
-    NudftServer objNudftServer;
-
-    return a.exec();
+    try{
+        NudftServer objNudftServer(&a);
+        return a.exec();
+    } catch (...) {
+        return 1;
+    }
 }

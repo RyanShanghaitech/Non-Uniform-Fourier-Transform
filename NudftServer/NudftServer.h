@@ -49,6 +49,7 @@
 
 #include <QtNetwork/QTcpServer>
 #include <QtNetwork/QTcpSocket>
+#include <QtCore/QCoreApplication>
 #include <thread>
 #include <complex>
 #include <iostream>

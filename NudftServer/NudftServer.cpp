@@ -3,19 +3,21 @@
 NudftServer::NudftServer(QObject *parent): QTcpServer(parent)
 {
     typeConfig config;
-    while(true){
-        funGetAddrPort(&config);
-        strcpy(addrServer, config.addr);
-        portServer = config.port;
 
-        if(this->listen(QHostAddress(addrServer), portServer)){
-            connect(this, &QTcpServer::newConnection, this, &NudftServer::slotNewConnection);
-            printf("[INFO] listening\n");
-            return;
-        }else{
-            printf("[ERRO] listening failed\n");
-            remove(FILE_CFG);
-        }
+    funGetAddrPort(&config);
+    strcpy(addrServer, config.addr);
+    portServer = config.port;
+
+    // print config
+    printf("[INFO] ADDR: %s\n", addrServer);
+    printf("[INFO] PORT: %d\n", portServer);
+
+    if(this->listen(QHostAddress(addrServer), portServer)){
+        printf("[INFO] listening\n");
+        connect(this, &QTcpServer::newConnection, this, &NudftServer::slotNewConnection);
+    }else{
+        printf("[ERRO] listening failed\n");
+        throw std::runtime_error("Failed to bind required ADDR and PORT.");
     }
 }
 
@@ -33,6 +35,8 @@ int NudftServer::funGetAddrPortDefault(NudftServer::typeConfig* config)
 
 int NudftServer::funGetAddrPortFile(NudftServer::typeConfig* config)
 {
+    config->addr[0] = '\0';
+    config->port = 0;
     FILE* fileConfig = fopen(FILE_CFG, "r");
 
     // validate file
@@ -47,13 +51,9 @@ int NudftServer::funGetAddrPortFile(NudftServer::typeConfig* config)
     int numBytePort = fscanf(fileConfig, "[PORT] %d\n", &config->port);
     fclose(fileConfig);
 
-    if(numByteAddr == 0 || numBytePort == 0){
+    if(numByteAddr != 1 || numBytePort != 1){
         return 1;
     }
-    
-    // print config
-    printf("[INFO] ADDR: %s\n", (char*)config->addr);
-    printf("[INFO] PORT: %d\n", config->port);
 
     return 0;
 }
