@@ -2,12 +2,12 @@ from numpy import *
 from matplotlib.pyplot import *
 import skimage.data as data
 import skimage.transform as transform
-from packNudftClient.modNudftClient import classNudftClient
+from packNudft.modNudftClient import classNudftClient
 
 sizeImg = 128
 
 def imfft(img): return fft.fftshift(fft.fft2(fft.ifftshift(img)))
-def imifft(ksapce): return fft.fftshift(fft.ifft2(fft.ifftshift(ksapce)))
+def imifft(kspace): return fft.fftshift(fft.ifft2(fft.ifftshift(kspace)))
 
 img = data.shepp_logan_phantom()
 img = transform.resize(img, (sizeImg, sizeImg))
@@ -27,7 +27,7 @@ listY = linspace(-sizeImg//2, sizeImg//2, sizeImg, endpoint=False)
 listY = repeat(listY, sizeImg).flatten()
 listOutputCoor = array([listX, listY], dtype=float64).T.copy()
 
-objClient = classNudftClient()
+objClient = classNudftClient("127.0.0.1", 7886)
 listOutputData = objClient.funNuidft(listInputCoor, listInputData, listOutputCoor)
 
 imgReco = listOutputData.reshape((sizeImg, sizeImg))

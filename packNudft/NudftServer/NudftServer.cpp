@@ -102,7 +102,7 @@ void NudftServer::slotSocketDisconnected()
 
 void NudftServer::slotDataReceived()
 {
-    printf("[INFO] data received\n");
+    // printf("[INFO] data received\n");
     static int64_t flagHeader = 0;
     static int64_t flagEscape = 0;
 
