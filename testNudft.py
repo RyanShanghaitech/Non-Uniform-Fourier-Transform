@@ -34,7 +34,7 @@ listY = repeat(listY, sizeImg).flatten()
 listOutputCoor = array([listX, listY], dtype=float64).T.copy()
 
 # run NUIDFT
-objClient = classNudftClient("127.0.0.1", 7886)
+objClient = classNudftClient()
 listOutputData = objClient.funNuidft(listInputCoor, listInputData, listOutputCoor)
 imgReco = listOutputData.reshape((sizeImg, sizeImg))
 
