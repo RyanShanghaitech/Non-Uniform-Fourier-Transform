@@ -78,13 +78,13 @@ private:
     std::list<uint8_t> listRxPkt;
     std::list<uint8_t> listTxPkt;
 
-    int funGetAddrPortDefault(NudftServer::typeConfig* cfg);
-    int funGetAddrPortFile(NudftServer::typeConfig* cfg);
-    int funSaveAddrPort(NudftServer::typeConfig* config);
-    int funGetAddrPort(NudftServer::typeConfig* cfg);
-    int funParsePkt(const std::list<uint8_t> *listRxPkt, std::list<uint8_t> *listTxPkt);
-    int funPackData(const std::list<uint8_t>* listTxPkt, QByteArray* qByteArraySocketTxData);
-    static int funNUDFT(
+    int getAddrPortDefault(NudftServer::typeConfig* cfg);
+    int getAddrPortFile(NudftServer::typeConfig* cfg);
+    int saveAddrPort(NudftServer::typeConfig* config);
+    int getAddrPort(NudftServer::typeConfig* cfg);
+    int parsePkt(const std::list<uint8_t> *listRxPkt, std::list<uint8_t> *listTxPkt);
+    int packData(const std::list<uint8_t>* listTxPkt, QByteArray* qByteArraySocketTxData);
+    static int nudft(
         const bool flagIDFT,
         const int64_t numDim,
         const int64_t lenDm0,
@@ -96,9 +96,9 @@ private:
         const int64_t idxThread = -1);
 
     #define NUDFT(numDim, size_Dm0, arrCoorDm0, arrValDm0, size_Dm1, arrCoorDm1, arrValDm1, idxThread) \
-        NudftServer::funNUDFT(false, numDim, size_Dm0, arrCoorDm0, arrValDm0, size_Dm1, arrCoorDm1, arrValDm1, idxThread)
+        NudftServer::nudft(false, numDim, size_Dm0, arrCoorDm0, arrValDm0, size_Dm1, arrCoorDm1, arrValDm1, idxThread)
     #define NUIDFT(numDim, size_Dm0, arrCoorDm0, arrValDm0, size_Dm1, arrCoorDm1, arrValDm1, idxThread) \
-        NudftServer::funNUDFT(true, numDim, size_Dm0, arrCoorDm0, arrValDm0, size_Dm1, arrCoorDm1, arrValDm1, idxThread)
+        NudftServer::nudft(true, numDim, size_Dm0, arrCoorDm0, arrValDm0, size_Dm1, arrCoorDm1, arrValDm1, idxThread)
 private slots:
     void slotNewConnection();
     void slotSocketDisconnected();

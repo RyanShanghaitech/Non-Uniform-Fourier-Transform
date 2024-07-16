@@ -4,7 +4,7 @@ NudftServer::NudftServer(QObject *parent): QTcpServer(parent)
 {
     typeConfig config;
 
-    funGetAddrPort(&config);
+    getAddrPort(&config);
     strcpy(addrServer, config.addr);
     portServer = config.port;
 
@@ -25,7 +25,7 @@ NudftServer::~NudftServer()
 {
 }
 
-int NudftServer::funGetAddrPortDefault(NudftServer::typeConfig* config)
+int NudftServer::getAddrPortDefault(NudftServer::typeConfig* config)
 {
     strcpy(config->addr, ADDR_SERVER_DEFAULT);
     config->port = PORT_SERVER_DEFAULT;
@@ -33,7 +33,7 @@ int NudftServer::funGetAddrPortDefault(NudftServer::typeConfig* config)
     return 0;
 }
 
-int NudftServer::funGetAddrPortFile(NudftServer::typeConfig* config)
+int NudftServer::getAddrPortFile(NudftServer::typeConfig* config)
 {
     config->addr[0] = '\0';
     config->port = 0;
@@ -58,7 +58,7 @@ int NudftServer::funGetAddrPortFile(NudftServer::typeConfig* config)
     return 0;
 }
 
-int NudftServer::funSaveAddrPort(NudftServer::typeConfig* config)
+int NudftServer::saveAddrPort(NudftServer::typeConfig* config)
 {
     // store config to file
     FILE* fileConfig = fopen(FILE_CFG, "w");
@@ -73,11 +73,11 @@ int NudftServer::funSaveAddrPort(NudftServer::typeConfig* config)
     }
 }
 
-int NudftServer::funGetAddrPort(NudftServer::typeConfig* config)
+int NudftServer::getAddrPort(NudftServer::typeConfig* config)
 {
     int rtFun = 0;
-    if(funGetAddrPortFile(config)){
-        funGetAddrPortDefault(config);
+    if(getAddrPortFile(config)){
+        getAddrPortDefault(config);
     }
     return 0;
 }
@@ -125,8 +125,8 @@ void NudftServer::slotDataReceived()
             break;
         case 0xFC:
             flagHeader = 0;
-            if(!funParsePkt(&listRxPkt, &listTxPkt)){
-                funPackData(&listTxPkt, &qByteArraySocketTxData);
+            if(!parsePkt(&listRxPkt, &listTxPkt)){
+                packData(&listTxPkt, &qByteArraySocketTxData);
                 socket->write(qByteArraySocketTxData);
                 socket->flush();
             }else{
@@ -145,7 +145,7 @@ void NudftServer::slotDataReceived()
     }
 }
 
-int NudftServer::funParsePkt(const std::list<uint8_t> *listRxPkt, std::list<uint8_t> *listTxPkt)
+int NudftServer::parsePkt(const std::list<uint8_t> *listRxPkt, std::list<uint8_t> *listTxPkt)
 {
     int64_t lenPkt = listRxPkt->size();
     std::unique_ptr<uint8_t[]> arrPkt(new uint8_t[lenPkt]);
@@ -259,7 +259,7 @@ int NudftServer::funParsePkt(const std::list<uint8_t> *listRxPkt, std::list<uint
     ptrOutputData = arrOutputData.get();;
     for(int64_t idxThread = 0; idxThread < numThread; ++idxThread){
         listThread.push_back(std::thread(
-            NudftServer::funNUDFT,
+            NudftServer::nudft,
             flagIDFT,
             numDim,
             numInput,
@@ -295,7 +295,7 @@ int NudftServer::funParsePkt(const std::list<uint8_t> *listRxPkt, std::list<uint
     return 0;
 }
 
-int NudftServer::funPackData(const std::list<uint8_t>* listTxPkt, QByteArray* qByteArraySocketTxData)
+int NudftServer::packData(const std::list<uint8_t>* listTxPkt, QByteArray* qByteArraySocketTxData)
 {
     qByteArraySocketTxData->append(0xFA);
     for(std::list<uint8_t>::const_iterator itTxPkt = listTxPkt->begin();
@@ -312,7 +312,7 @@ int NudftServer::funPackData(const std::list<uint8_t>* listTxPkt, QByteArray* qB
     return 0;
 }
 
-int NudftServer::funNUDFT(
+int NudftServer::nudft(
     const bool flagIDFT,
     const int64_t numDim,
     const int64_t lenDm0,
