@@ -40,8 +40,14 @@ imgReco = listOutputData.reshape((sizeImg, sizeImg))
 
 # show results
 figure()
-subplot(1, 2, 1)
-imshow(abs(img), cmap='gray'); title('Original')
-subplot(1, 2, 2)
-imshow(abs(imgReco), cmap='gray'); title('NUIDFT')
+subplot(1,3,1)
+imshow(abs(img), cmap='gray')
+title('Im')
+subplot(1,3,2)
+scatter(listInputCoor[:,0], listInputCoor[:,1])
+title('Sample in kspace'); axis("equal"); xlim([-0.55,-0.45]); ylim([0.45,0.55])
+subplot(1,3,3)
+imshow(abs(imgReco), cmap='gray')
+title('Im->DFT->IDFT')
+
 show()
