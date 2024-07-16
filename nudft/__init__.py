@@ -2,6 +2,7 @@ import os.path as path
 import subprocess as sp
 import atexit
 import time
+from .NudftClient import *
 
 dirThisFile, nameThisFile = path.split(__file__)
 process = sp.Popen(path.join(dirThisFile, "NudftServer/build/NudftServer"))

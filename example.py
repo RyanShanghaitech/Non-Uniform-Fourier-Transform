@@ -4,17 +4,17 @@ from numpy import *
 from matplotlib.pyplot import *
 import skimage.data as data
 import skimage.transform as transform
-from packNudft.modNudftClient import classNudftClient
+from nudft import *
 
 sizeImg = 128
 
-def imfft(img): return fft.fftshift(fft.fft2(fft.ifftshift(img)))
-def imifft(kspace): return fft.fftshift(fft.ifft2(fft.ifftshift(kspace)))
+def cfft(img): return fft.fftshift(fft.fft2(fft.ifftshift(img)))
+def cifft(kspace): return fft.fftshift(fft.ifft2(fft.ifftshift(kspace)))
 
 # generate phantom
 img = data.shepp_logan_phantom()
 img = transform.resize(img, (sizeImg, sizeImg))
-kspace = imfft(img)
+kspace = cfft(img)
 
 # generate list of input (kspace) coordinates
 listKx = linspace(-0.5, 0.5, sizeImg, endpoint=False)
@@ -34,8 +34,8 @@ listY = repeat(listY, sizeImg).flatten()
 listOutputCoor = array([listX, listY], dtype=float64).T.copy()
 
 # run NUIDFT
-objClient = classNudftClient()
-listOutputData = objClient.funNuidft(listInputCoor, listInputData, listOutputCoor)
+objClient = NudftClient()
+listOutputData = objClient.nuidft(listInputCoor, listInputData, listOutputCoor)
 imgReco = listOutputData.reshape((sizeImg, sizeImg))
 
 # show results

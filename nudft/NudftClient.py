@@ -1,7 +1,7 @@
 from numpy import *
 from socket import *
 
-class classNudftClient:
+class NudftClient:
     def __init__(self, ipServer:str="127.0.0.1", portServer:int=7885) -> None:
         self.objSocket = socket(AF_INET, SOCK_STREAM)
         try:
@@ -9,7 +9,7 @@ class classNudftClient:
         except:
             raise ConnectionError("in classNudftClient")
 
-    def _funPackData(self, flagIdft:bool, listCoorIn:ndarray, listDataIn:ndarray, listCoorOut:ndarray) -> ndarray:
+    def _packData(self, flagIdft:bool, listCoorIn:ndarray, listDataIn:ndarray, listCoorOut:ndarray) -> ndarray:
         assert(listCoorIn.ndim == 2 and listDataIn.ndim == 1 and listCoorOut.ndim == 2)
         assert(listCoorIn.shape[0] == listDataIn.shape[0]) # num of point consistency
         assert(listCoorIn.shape[1] == listCoorOut.shape[1]) # dim consistency
@@ -49,7 +49,7 @@ class classNudftClient:
         # return
         return listPkgTx
     
-    def _funUnpackData(self, bytesPkgRx:bytes) -> ndarray:
+    def _unpackData(self, bytesPkgRx:bytes) -> ndarray:
         # check header, footer
         assert(bytesPkgRx[0] == 0xFA)
         assert(bytesPkgRx[-1] == 0xFC)
@@ -74,7 +74,7 @@ class classNudftClient:
         # return
         return listDataOut
 
-    def _funAcqPkg(self) -> bytes:
+    def _acqPkg(self) -> bytes:
         # self.objSocket.setblocking(False)
         flagHeader = False
         bytesPkgRx = bytes()
@@ -95,23 +95,23 @@ class classNudftClient:
                 break
         return bytesPkgRx
     
-    def funNudft(self, listX:ndarray, listIx:ndarray, listK:ndarray) -> ndarray:
+    def nudft(self, listX:ndarray, listIx:ndarray, listK:ndarray) -> ndarray:
         assert(listX.shape[0] == listIx.shape[0]) # num of point consistency
         assert(listX.shape[1] == listK.shape[1]) # dim consistency
-        listPkgTx = self._funPackData(False, listX, listIx, listK)
+        listPkgTx = self._packData(False, listX, listIx, listK)
         self.objSocket.send(listPkgTx)
-        listPkgRx = self._funAcqPkg()
-        listSk = self._funUnpackData(listPkgRx)
+        listPkgRx = self._acqPkg()
+        listSk = self._unpackData(listPkgRx)
         listSk = listSk[0::2] + 1j*listSk[1::2]
         return listSk
     
-    def funNuidft(self, listK:ndarray, listSk:ndarray, listX:ndarray) -> ndarray:
+    def nuidft(self, listK:ndarray, listSk:ndarray, listX:ndarray) -> ndarray:
         assert(listK.shape[0] == listSk.shape[0]) # num of point consistency
         assert(listK.shape[1] == listX.shape[1]) # dim consistency
-        listPkgTx = self._funPackData(True, listK, listSk, listX)
+        listPkgTx = self._packData(True, listK, listSk, listX)
         self.objSocket.send(listPkgTx)
-        bytesPkgRx = self._funAcqPkg()
-        listIx = self._funUnpackData(bytesPkgRx)
+        bytesPkgRx = self._acqPkg()
+        listIx = self._unpackData(bytesPkgRx)
         listIx = listIx[0::2] + 1j*listIx[1::2]
         return listIx
 
