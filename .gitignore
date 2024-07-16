@@ -6,3 +6,6 @@ __pycache__/
 
 # vscode cache
 .vscode/
+
+# binaries (user need to build on their own environment)
+build/
