@@ -3,7 +3,7 @@
 1. Currently, only `linux(or wsl) + conda` platform is supported. To use this package on other platform, you may need to re-compile the `NudftServer` executable and install environments on your own.
 
 ## How to use
-1. Run `install.bash` first to install essential environment.
+1. Run `bash install.bash` first to install essential environment.
 1. See example `example.py`.
 
 ## Abstract
