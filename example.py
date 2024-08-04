@@ -6,48 +6,39 @@ import skimage.data as data
 import skimage.transform as transform
 from nudft import *
 
-sizeImg = 128
+sizImg = 128
+objClient = NudftClient()
 
 def cfft(img): return fft.fftshift(fft.fft2(fft.ifftshift(img)))
 def cifft(kspace): return fft.fftshift(fft.ifft2(fft.ifftshift(kspace)))
 
 # generate phantom
 img = data.shepp_logan_phantom()
-img = transform.resize(img, (sizeImg, sizeImg))
+img = transform.resize(img, [sizImg, sizImg])
 kspace = cfft(img)
 
-# generate list of input (kspace) coordinates
-listKx = linspace(-0.5, 0.5, sizeImg, endpoint=False)
-listKx = tile(listKx, sizeImg).flatten()
-listKy = linspace(-0.5, 0.5, sizeImg, endpoint=False)
-listKy = repeat(listKy, sizeImg).flatten()
-listInputCoor = array([listKx, listKy], dtype=float64).T.copy()
+#
+lstKxKy = loadtxt("./Resource/trjRadial.txt") # load sampling coordinates in k-space
+lstDs = loadtxt("./Resource/lstDs_Radial.txt") # load sampling density compensation coefficient
+lstXY = loadtxt("./Resource/trjCart.txt") # load sampling coordinates in image
 
 # generate list of input (kspace) data
-listInputData = kspace.flatten().copy()
-
-# generate list of output (img) coordinates
-listX = linspace(-sizeImg//2, sizeImg//2, sizeImg, endpoint=False)
-listX = tile(listX, sizeImg).flatten()
-listY = linspace(-sizeImg//2, sizeImg//2, sizeImg, endpoint=False)
-listY = repeat(listY, sizeImg).flatten()
-listOutputCoor = array([listX, listY], dtype=float64).T.copy()
+lstRawdata = objClient.nudft(lstXY, img.flatten(), lstKxKy)
 
 # run NUIDFT
-objClient = NudftClient()
-listOutputData = objClient.nuidft(listInputCoor, listInputData, listOutputCoor)
-imgReco = listOutputData.reshape((sizeImg, sizeImg))
+lstOutputData = objClient.nuidft(lstKxKy, lstRawdata*lstDs, lstXY)
+imgReco = lstOutputData.reshape([sizImg, sizImg])
 
 # show results
 figure()
-subplot(1,3,1)
-imshow(abs(img), cmap='gray')
-title('Im')
-subplot(1,3,2)
-scatter(listInputCoor[:,0], listInputCoor[:,1])
-title('Sample in kspace'); axis("equal"); xlim([-0.55,-0.45]); ylim([0.45,0.55])
-subplot(1,3,3)
-imshow(abs(imgReco), cmap='gray')
-title('Im->DFT->IDFT')
+subplot(131)
+imshow(abs(img), cmap="gray", vmin=0, vmax=1)
+title("Im"); colorbar()
+subplot(132)
+plot(lstKxKy[:,0], lstKxKy[:,1], marker=".")
+title("Sample in kspace"); axis("equal")#; xlim([-0.55,-0.45]); ylim([0.45,0.55])
+subplot(133)
+imshow(abs(imgReco), cmap="gray")
+title("Im->DFT->IDFT"); colorbar()
 
 show()
